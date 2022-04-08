@@ -4,13 +4,19 @@ const usersRoutes = require('./routes/user-routes');
 const bodyParser = require('body-parser');
 const movieRoutes = require('./routes/movies-routes');
 const PORT = process.env.PORT || 5000;
-
-
+const dotenv = require('dotenv');
+dotenv.config()
 const app = express();
-app.use(bodyParser.json());
+const cors = require('cors');
 
+app.use(bodyParser.json());
+app.use(cors());
+
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
 app.get('/',(req,res) => {
-    res.send("Welcome to Node Api1")
+    res.send("Welcome to  Movie API task")
 })
 
 mongoose
