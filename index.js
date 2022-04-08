@@ -15,8 +15,12 @@ app.use(cors());
 app.use(bodyParser.urlencoded({
     extended: true
 }));
+
 app.get('/',(req,res) => {
     res.send("Welcome to  Movie API task")
+})
+app.get('/home',(req,res) => {
+    res.send("Welcome to  Movie API task Home page")
 })
 
 mongoose
