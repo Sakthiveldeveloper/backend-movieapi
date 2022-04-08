@@ -30,11 +30,11 @@ router.delete('/:id',auth, deleteMovie);
 // // CREATE MOVIE 
 // router.post('/',validation,createMovie);
 
-// // GET MOVIE BY ID 
-// router.get('/:id',getMovieById);
+// GET MOVIE BY ID 
+router.get('/:id',getMovieById);
 
-// // GET ALL MOVIES
-// router.get('/',getAllMovies);
+// GET ALL MOVIES
+router.get('/',getAllMovies);
 
 // // UPDATE MOVIE 
 // router.patch('/:id',validation,updateMovie);
