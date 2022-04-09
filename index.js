@@ -1,232 +1,42 @@
-var express = require('express');
-const app = express();
+const express = require('express');
+const mongoose = require('mongoose');
+const usersRoutes = require('./routes/user-routes');
 const bodyParser = require('body-parser');
+const movieRoutes = require('./routes/movies-routes');
+const PORT = process.env.PORT || 5000;
 const dotenv = require('dotenv');
 dotenv.config()
-const port =process.env.PORT||6700;
-const mongo = require('mongodb');
-const MongoClient = mongo.MongoClient;
+const app = express();
 const cors = require('cors');
 
-//to receive data from form 
-app.use(bodyParser.urlencoded({
-        extended: true
-    }));
 app.use(bodyParser.json());
 app.use(cors());
 
-//const mongourl = "mongodb://localhost:27017"
-const mongourl = "mongodb+srv://edureka:1234@cluster0.t9dwc.mongodb.net/zomato?retryWrites=true&w=majority"
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
 
-var db;
-let col_name ="location"
-let col_name1 ="restaurants"
-//get
 app.get('/',(req,res) => {
-    res.send("Welcome to Node Api1")
+    res.send("Welcome to  Movie API task")
+})
+app.get('/home',(req,res) => {
+    res.send("Welcome to  Movie API task Home page")
 })
 
-//list of city
-//http://localhost:6700/location
-//working
-app.get('/location',(req,res) =>{
-    db.collection(col_name).find().toArray((err,result)=>{
-        if(err) throw err;
-        res.send(result)
-    })
-})
-
-//List all re	staurants
-//http://localhost:6700/restaurants
-//working
-app.get('/restaurants',(req,res) =>{
-    db.collection(col_name1).find().toArray((err,result)=>{
-        if(err) throw err;
-        res.send(result)
-    })
-})
-//query example
-//http://localhost:6700/restaurant?stateId=2
-// restarants with respect to quick search
-//working
-app.get('/restaurant',(req,res) =>{
-    var query = {}
-    if(req.query.stateId){
-        query={state_id:Number(req.query.stateId)}
-    }else if(req.query.mealtype_id){
-        query={"mealTypes.mealtype_id":Number(req.query.mealtype_id)}
-    }
-    db.collection(col_name1).find(query).toArray((err,result)=>{
-        if(err) throw err;
-        res.send(result)
-    })
-})
-//https://zomatojulapi.herokuapp.com/restaurant?mealtype_id=1
-
-//filterapi
-//(http://localhost:8210/filter/1?lcost=500&hcost=600)
-//working//(http://localhost:8210/filter/1?lcost=500&hcost=600)
-//https://univercityapi.herokuapp.com/filter/1
-//https://zomatojulapi.herokuapp.com/filter/1?sortkey=-1
-//https://zomatojulapi.herokuapp.com/filter/1?lcost=500&hcost=1500
-app.get('/filter/:mealType',(req,res) => {
-    var sort = {cost:1}
-    var skip = 0;
-    var limit= 1000000000000;
-    if(req.query.sortkey){
-        sort = {cost:req.query.sortkey}
-    }
-    if(req.query.skip && req.query.limit){
-        skip = Number(req.query.skip);
-        limit = Number(req.query.limit)
-    }
-    var mealType =Number(req.params.mealType);
-    var query = {"mealTypes.mealtype_id":Number(mealType)};
-    if(req.query.cuisine && req.query.lcost && req.query.hcost){
-        query={
-            $and:[{cost:{$gt:Number(req.query.lcost),$lt:Number(req.query.hcost)}}],
-            "cuisines.cuisine_id":Number(req.query.cuisine),
-            "mealTypes.mealtype_id":Number(mealType)
-        }
-    }
-    else if(req.query.cuisine){
-        query = {"mealTypes.mealtype_id":Number(mealType),"cuisines.cuisine_id":Number(req.query.cuisine) }
-    }
-    else if(req.query.lcost && req.query.hcost){
-        var lcost = Number(req.query.lcost);
-        var hcost = Number(req.query.hcost);
-        query={$and:[{cost:{$gt:lcost,$lt:hcost}}],"mealTypes.mealtype_id":Number(mealType)}
-    }
-    db.collection(col_name1).find(query).sort(sort).skip(skip).limit(limit).toArray((err,result)=>{
-        if(err) throw err;
-        res.send(result)
-    })
-})
-// query example
-/*app.get('/restaurant',(req,res) =>{
-    var mealType = req.query.mealType?req.query.mealType:"2";
-    db.collection(col_name1).find({"type:mealType":mealType}).toArray((err,result)=>{
-        if(err) throw err;
-        res.send(result)
-    })
-})*/
-//list of quicksearch
-//working
-app.get('/quicksearch',(req,res) =>{
-    db.collection('mealtype').find().toArray((err,result)=>{
-        if(err) throw err;
-        res.send(result)
-    })
-})
-// restaurant Details
-app.get('/details/:id',(req,res)=>{
-    var id= req.params.id
-    db.collection('restaurants').find({restaurant_id:Number(id)}).toArray((err, result) => {
-        if(err) throw err;
-        res.send(result)
-    })
-})
-//https://zomatojulapi.herokuapp.com/details/2
-//http://localhost:6700/details/3
-
-//menu Details on basic for resturent
-//working
-app.get('/menu/:id',(req,res)=>{
-    var id= req.params.id
-    db.collection('menu').find({restaurant_id:Number(id)}).toArray((err, result) => {
-        if(err) throw err;
-        res.send(result)
-    })
-})
-
-
-//geting multiple data in a single 
-//use postman
-//working
-// add ids
-app.post('/menuItem',(req, res) => {
-    console.log(req.body)
-    db.collection('menu').find({menu_id:{$in:req.body.ids}}).toArray((err, result) => {
-        if(err) throw err;
-        res.send(result)
-    })
-})
-
-// place order
-//working
-app.post('/placeOrder',(req, res) => {
-    console.log(req.body);
-    db.collection('orders').insert(req.body,(err,result) => {
-        if (err) throw err;
-        res.send("Order Placded")
-    })
-})
-
-
-//view order
-//able to find the order with user
-//workinng
-app.get('/viewOrder',(req,res)=>{
-    var query = {}
-    if(req.query.email){
-        query = {email:req.query.email}
-    }
-    db.collection('orders').find(query).toArray((err, result) => {
-        if(err) throw err;
-        res.send(result)
-    })
-})
-/*
-//view order
-app.get('/viewOrder',(req,res)=>{
-    db.collection('orders').find().toArray((err, result) => {
-        if(err) throw err;
-        res.send(result)
-    })
-})
-*/
-//view order with mongodb id
-//working
-app.get('/viewOrder/:id',(req,res)=>{
-    var id=mongo.ObjectId(req.params.id)
-    db.collection('orders').find({_id:id}).toArray((err, result) => {
-        if(err) throw err;
-        res.send(result)
-    })
-})
-
-//delete order
-//working
-app.delete('/deleteOrder',(req,res)=>{
-    db.collection('orders').remove({},(err, result) => {
-        if(err) throw err;
-        res.send(result)
-    })
-})
-app.put('/updateOrder/:id',(req,res) => {
-    var id = Number(req.params.id);
-    var status = req.body.status?req.body.status:"Pending"
-    db.collection('orders').updateOne(
-        {id:id},
+mongoose
+    .connect(
+        "mongodb+srv://edureka:1234@cluster0.t9dwc.mongodb.net/movie?retryWrites=true&w=majority",
         {
-            $set:{
-                "date":req.body.date,
-                "bank_status":req.body.bank_status,
-                "bank":req.body.bank,
-                "status":status
-            }
-        }
-    )
-    res.send('data updated')
-})
-//order statu changed 
+            useUnifiedTopology: true, 
+            useNewUrlParser: true, 
+        })
+    .then(() => {
+        app.listen(PORT, () => console.log(`server is running ${PORT}`))
+    })
+    .catch(err => {
+        console.log(err);
+        console.log('hii')
+    });
 
-
-
-MongoClient.connect(mongourl, (err,client) => {
-    if(err) console.log("Error While Connecting");
-    db = client.db('zomato');
-    app.listen(port,()=>{
-        console.log(`listening on port no ${port}`)
-    });     
-})
+app.use('/api/users', usersRoutes);
+app.use('/api/movie', movieRoutes);
